@@ -27,13 +27,13 @@ async fn main() {
     // //     eprintln!("Error: {:?}", e);
     // // }
 
-    let watch_dir = "data"; // Directory to monitor
+    let watch_dir = "blobs"; // Directory to monitor
     let mut known_files = HashSet::new();
 
-    // Create directory if it doesn't exist
-    if !Path::new(watch_dir).exists() {
-        std::fs::create_dir(watch_dir).expect("Failed to create watch directory");
-    }
+    // // Create directory if it doesn't exist
+    // if !Path::new(watch_dir).exists() {
+    //     std::fs::create_dir(watch_dir).expect("Failed to create watch directory");
+    // }
 
     loop {
         // Read all files in directory
@@ -48,7 +48,7 @@ async fn main() {
                     {
                         println!("New file detected: {:?}", path);
 
-                        if let Err(e) = submit_data().await {
+                        if let Err(e) = submit_data_from_bin(&path).await {
                             eprintln!("Error submitting data for {:?}: {:?}", path, e);
                         } else {
                             // Add to known files after successful processing
@@ -207,17 +207,16 @@ pub fn read_binary_file<P: AsRef<Path>>(file_path: P) -> Result<Vec<u8>, io::Err
     Ok(buffer)
 }
 
-pub async fn submit_data_from_bin(file_path: &str) -> Result<(), ClientError> {
+pub async fn submit_data_from_bin(file_path: &Path) -> Result<(), ClientError> {
     let sdk = SDK::new("wss://turing-rpc.avail.so/ws").await?;
 
     dotenv().ok();
-    let seed = env::var("SEED").expect("SEED environment variable is not set");
+    let seed = "window mask stomach noodle total mechanic vacuum noble inform guess jaguar flock";
     let account = account::from_secret_uri(&seed)?;
     println!("Account Address: {}", account.public_key().to_account_id());
 
     // Please note that the tx will fail if this application key does not exist
-    let my_application_key = env::var("APP_ID").expect("APP_ID is not correct");
-    let my_application_key = my_application_key.parse::<u32>().unwrap();
+    let my_application_key = 293;
 
     // Read binary data from file
     let data = read_binary_file(file_path).unwrap();
@@ -244,8 +243,9 @@ pub async fn submit_data_from_bin(file_path: &str) -> Result<(), ClientError> {
         return Err("Failed to get Data Submission Call data".into());
     };
 
-    let data = to_ascii(decoded.data.0).unwrap();
-    println!("Call data: {:?}", data);
+    // TODO: Decode the data properly as it unwraps to a NONE
+    // let data = to_ascii(decoded.data.0).unwrap();
+    // println!("Call data: {:?}", data);
 
     println!("Data Submission finished correctly");
 
